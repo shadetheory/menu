@@ -1,0 +1,8 @@
+JetBrains Mono
+Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)
+Licensed under the SIL Open Font License, Version 1.1.
+
+These two files are the Regular and Medium weights, bundled so the preview
+has a face when JetBrainsMono Nerd Font is not installed. Icons in the
+preview are SVG, not font glyphs. The page prefers
+"JetBrainsMono Nerd Font" when that family is already installed.

@@ -1,0 +1,6 @@
+# Synthetic fixtures for the unavailable roster. Not accounts.
+# Add a fixture with:  bot <id> <display name>
+# Optional argv, still never built from search text:
+#   launch <id> <program> <arg>...
+bot example-a Example A
+bot example-b Example B

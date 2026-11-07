@@ -1,3 +1,5 @@
+/target
+**/*.swp
 *.tar
 *.tar.*
 *.jar
@@ -9,6 +11,4 @@
 *.log
 *.log.*
 *.sig
-
 pkg/
-src/

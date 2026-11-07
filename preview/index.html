@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Omarchy Menu Preview (DEMO)</title>
+  <link rel="stylesheet" href="css/app.css">
+  <script>
+    if (new URLSearchParams(location.search).get("presentation") === "window") {
+      document.documentElement.dataset.presentation = "window";
+    }
+  </script>
+  <script src="config/palette.js"></script>
+</head>
+<body>
+  <div class="stage">
+    <section class="palette" role="dialog" aria-modal="true" aria-labelledby="demo-pill">
+      <header class="top">
+        <p id="demo-pill" class="demo-pill">DEMO · example data</p>
+        <p class="top-meta">Visual prototype · not the Omarchy menu</p>
+      </header>
+
+      <form class="ask" id="ask" autocomplete="off">
+        <label for="q">Question</label>
+        <div class="field">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.25"></circle><path d="M16 16.5L20 20.5"></path></svg>
+          <input id="q" name="q" type="text" spellcheck="false" enterkeyhint="search" placeholder="Ask a question" aria-describedby="stale-home">
+        </div>
+      </form>
+
+      <p id="stale-home" class="stale" role="status">Example snapshot. Not live. Not read from a store or an account.</p>
+
+      <div class="split" id="split">
+        <div class="list-wrap">
+          <ul id="results" role="listbox" aria-label="Example results"></ul>
+        </div>
+        <section id="detail" class="detail" hidden aria-live="polite"></section>
+      </div>
+
+      <footer class="foot">
+        <span>↑↓ select</span>
+        <span>Enter opens an example</span>
+        <span>Esc back</span>
+        <span class="foot-warn">Does not run commands, message anyone, or open an account</span>
+      </footer>
+    </section>
+  </div>
+  <script src="js/app.js"></script>
+</body>
+</html>

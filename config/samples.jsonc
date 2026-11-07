@@ -1,0 +1,13 @@
+{
+  // EXAMPLE extension layered after the vendored stock menu.
+  // These rows are not upstream Omarchy entries. They open in-process
+  // sample panels and have no shell action.
+  "samples": {"label": "Not connected", "description": "Unavailable panels. Not live accounts."},
+  "samples.groceries": {"label": "Groceries", "description": "Unavailable. Not connected.", "panel": "groceries"},
+  "samples.example-a": {"label": "Example A", "description": "Unavailable. Not connected.", "panel": "example-a"},
+  "samples.example-b": {"label": "Example B", "description": "Unavailable. Not connected.", "panel": "example-b"},
+  "samples.messages": {"label": "Messages", "description": "Unavailable. Not connected.", "panel": "inbox"},
+  "samples.recent": {"label": "Recent work", "description": "Unavailable. Not connected.", "panel": "recent"},
+  "samples.decisions": {"label": "Open decisions", "description": "Unavailable. Not connected.", "panel": "decisions"},
+  "samples.notice": {"label": "What stays local", "description": "This window does not read mail, groceries, or contacts.", "panel": "answer"}
+}

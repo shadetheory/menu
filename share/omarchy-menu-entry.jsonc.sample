@@ -1,0 +1,25 @@
+{
+  // Sample only. Installing this into the user extension is manual and is not
+  // done by the installer. The installer does not write ~/.config/omarchy.
+  // Upstream MenuModel merge clears omitted fields, so this entry keeps the
+  // id (the object key), the label, and the action together, and fills the
+  // other fields MenuModel copies. The action is a full path placeholder
+  // with no search interpolation. Replace PREFIX with the install prefix
+  // if you copy this by hand into the user extension.
+  "omarchy-menu-rust": {
+    "label": "Omarchy Menu Rust",
+    "title": "Omarchy Menu Rust",
+    "description": "Standalone Rust menu. Not the stock omarchy.menu plugin.",
+    "icon": "",
+    "iconFont": "",
+    "parent": "root",
+    "target": "",
+    "action": "PREFIX/current/bin/omarchy-menu-rust",
+    "provider": "",
+    "aliases": [],
+    "searchTerms": [],
+    "when": "",
+    "checked": "",
+    "disabled": ""
+  }
+}
