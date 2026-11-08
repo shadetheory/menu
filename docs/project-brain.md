@@ -6,6 +6,8 @@ Last reconciled: 2026-11-07. Repository: `shadetheory/menu`. This is the startin
 
 The menu should make Jordan fast: recover an old idea or something he built by typing a theme, inspect the original work, and eventually take a useful next step. His initial vocabulary is **Music, Automation, Gate, Receiver, Listener, Pub/Sub**. He requested vectors within the project, a lower/more central menu, and testing against the live desktop menu.
 
+Jordan clarified the central architecture: **the local model controls fetching**. The proposed next layer chooses providers and queries through a typed, bounded fetch plan; current embeddings only rank documents. See [local fetch planner](local-fetch-planner.md).
+
 The later direction is **small floating apps that replace routine browser workflows**. His concrete example is typing **Elon Musk** to see recent news, recent X posts, and a useful sourced profile. This is backlog work; no web/X/profile provider is connected or chosen.
 
 Jordan also requested a shared repo brain: important facts persist here, every meaningful change explains why, and future work has explicit priority and dependency order. [AGENTS.md](../AGENTS.md) defines the upkeep workflow.
@@ -16,6 +18,7 @@ These are requests from the project conversation on 2026-11-07. They do not esta
 
 | Need | Primary record |
 |---|---|
+| Continuation diagram and Amp orb setup | [Continuation](continuation.md), [orb plan](orb-plan.md) |
 | Next work, priority, dependencies, completion gates | [Roadmap](roadmap.md) |
 | What changed and why | [Change history](../CHANGELOG.md) |
 | Consequential choices and their authority | [Decisions](decisions.md) |
@@ -33,7 +36,7 @@ The panel center is at 55% of the focused output height, clamped to that output.
 
 The candidate is installed locally as `0.1.0-work-recall-20261107`, with the previous version retained. Recorded checks: 66 tests passed, Clippy passed, native source preview inspected, installed launcher → Music → Escape passed. **Physical Alt+Space acceptance remains unverified**: synthetic Alt+Space failed although the installed toggle worked. The duplicate dictation binding was removed from local user configuration. See the validation record for exact limits and evidence.
 
-At this checkpoint the recall implementation is uncommitted local work. Documentation is being captured separately; a documentation commit does not imply the implementation has been committed or published. Check current git status and history rather than assuming this dated state persists. No GitHub issue drafts have been posted.
+Jordan authorized publishing the implementation and project context to `feat/work-recall` on 2026-11-07. R03 now records the shared code checkpoint, while R03A retains the native acceptance gate. Check git history/remote state and the publication validation record for exact commit status. No GitHub issue drafts have been posted; master is not replaced by publishing this feature branch.
 
 ## Boundaries that matter
 

@@ -2,6 +2,16 @@
 
 Record completed changes here with their reasons and evidence. Future work and priority belong in [the roadmap](docs/roadmap.md). Dates are work dates, not release claims. Entries below reconstruct the current session from the working tree and recorded checks; earlier history remains in git.
 
+## 2026-11-07 — R00/R15/R16: continuation, orb plan, and local fetch planning
+
+**Why:** Jordan requested publishing all project context, a continuation diagram, and an Amp orb configuration plan. He then clarified the central architecture: the local model controls fetching.
+
+**Changed:** Added `docs/continuation.md`, `docs/orb-plan.md`, and `docs/local-fetch-planner.md`, plus editable/interactive diagrams and browser evidence under `docs/diagrams/`. Updated the shared brain, roadmap, decisions, and contributor workflow. Split code publication (R03) from native/core acceptance (R03A), added actual orb readiness (R15) and local fetch planning (R16), and moved R16 ahead of floating research runtime work. Corrected stale placement and installed-toggle statements in `docs/visual-tokens.md` and `INSTALL.md`.
+
+**Verification:** Checked current official Amp documentation for lifecycle, sizing, modes, branch shipping, profiles, and desktop behavior. Diagram structural validation passed 9/9; its browser fit limit is recorded rather than claimed passed. Source commit `4395ee1` built from a fresh detached checkout with a new build directory. 84 local links across 27 Markdown files passed; all 18 roadmap items have valid dependencies and no cycles. Diff checks passed. Implementation/shared context pushed at `4395ee1`; this documentation update follows on the same branch.
+
+**Limits:** Orbs and lifecycle hooks are recommended, not provisioned or verified. Fetch planning is designed, not implemented. No online providers are connected. The standalone diagram scrolls vertically at smaller desktop sizes; the GitHub Mermaid diagram remains the primary compact view. R01/R02 acceptance remains open. Private source corpora/configuration and desktop captures are not included in publication.
+
 ## 2026-11-07 — R03: implementation checkpoint for orb continuation
 
 **Why:** Jordan explicitly requested pushing the implementation and all relevant project context so orbs can continue. This is a feature-branch checkpoint, not a release signoff.

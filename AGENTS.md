@@ -32,3 +32,7 @@ Keep each fact in one primary document and link to it elsewhere. The project bra
 ## Finish a work item
 
 A completed item has an implementation (when applicable), a reviewed diff, appropriate passing checks, updated rationale/history, and satisfied dependencies and acceptance criteria. If evidence is missing, retain an honest partial or blocked status. Do not hide unfinished work in a final chat response.
+
+## Orb work
+
+Use [the orb plan](docs/orb-plan.md) for environment preparation, task boundaries, and handoff evidence. Workers update owned technical docs and include proposed central roadmap/changelog changes in their handoff; the integrator reconciles those shared files before accepting the branch. Cloud checks cannot establish Thor's physical shortcut behavior. The next architectural direction is [local model fetch planning](docs/local-fetch-planner.md); it is not implemented merely because embeddings exist.

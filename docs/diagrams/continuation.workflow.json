@@ -1,0 +1,145 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Shade Menu: continuation with Amp orbs",
+    "locale": "en",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    {
+      "id": "delivery",
+      "label": "Implementation: orb checks, integrator review, Thor acceptance"
+    },
+    {
+      "id": "research",
+      "label": "Independent provider research"
+    }
+  ],
+  "mainPath": [
+    "brief",
+    "build",
+    "checks",
+    "review",
+    "native",
+    "record"
+  ],
+  "nodes": [
+    {
+      "id": "brief",
+      "lane": "delivery",
+      "col": 0,
+      "type": "database",
+      "label": "Shared brain",
+      "sublabel": "Scope + dependencies"
+    },
+    {
+      "id": "build",
+      "lane": "delivery",
+      "col": 1,
+      "type": "backend",
+      "label": "One branch",
+      "sublabel": "Build orb"
+    },
+    {
+      "id": "checks",
+      "lane": "delivery",
+      "col": 2,
+      "type": "security",
+      "label": "Prove change",
+      "sublabel": "Orb tests + evidence"
+    },
+    {
+      "id": "review",
+      "lane": "delivery",
+      "col": 3,
+      "type": "security",
+      "label": "Review diff",
+      "sublabel": "Integrator"
+    },
+    {
+      "id": "native",
+      "lane": "delivery",
+      "col": 4,
+      "type": "frontend",
+      "label": "Native check",
+      "sublabel": "Thor: Alt+Space"
+    },
+    {
+      "id": "record",
+      "lane": "delivery",
+      "col": 5,
+      "type": "database",
+      "label": "Integrate",
+      "sublabel": "Record next work"
+    },
+    {
+      "id": "discover",
+      "lane": "research",
+      "col": 1,
+      "type": "external",
+      "label": "Provider study",
+      "sublabel": "News + X + profile",
+      "yOffset": 80
+    },
+    {
+      "id": "evidence",
+      "lane": "research",
+      "col": 2,
+      "type": "backend",
+      "label": "Source evidence",
+      "sublabel": "Access + freshness",
+      "width": 160,
+      "yOffset": 80
+    }
+  ],
+  "edges": [
+    {
+      "from": "brief",
+      "to": "build",
+      "label": "task brief",
+      "role": "main"
+    },
+    {
+      "from": "build",
+      "to": "checks",
+      "role": "main"
+    },
+    {
+      "from": "checks",
+      "to": "review",
+      "label": "passing checks",
+      "role": "main"
+    },
+    {
+      "from": "review",
+      "to": "native",
+      "label": "candidate SHA",
+      "role": "main"
+    },
+    {
+      "from": "native",
+      "to": "record",
+      "label": "acceptance evidence",
+      "role": "main"
+    },
+    {
+      "from": "brief",
+      "to": "discover",
+      "label": "independent work",
+      "role": "branch",
+      "toSide": "top"
+    },
+    {
+      "from": "discover",
+      "to": "evidence",
+      "role": "branch"
+    },
+    {
+      "from": "evidence",
+      "to": "review",
+      "label": "research findings",
+      "role": "async"
+    }
+  ]
+}

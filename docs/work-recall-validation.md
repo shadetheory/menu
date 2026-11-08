@@ -29,3 +29,13 @@ The installed binary SHA-256 is `054e7cd9da635b53a4ea4969a12941baaf0aa29bf8cc87e
 For rollback, close the menu and restore the prefix's `current` link and its `bin` entry links to the retained `versions/0.1.0` installation. Inspect the current links first; the launcher can resolve its own version independently of `current`. Keep the new version until rollback is confirmed. The pre-change desktop binding is backed up at `~/.config/hypr/bindings.lua.bak.menu-1794102887659420830`; restoring it would also restore the duplicate dictation shortcut, so prefer retaining the explicit unbind.
 
 This release previews sources in process. External opens, music playback, agent dispatch, filesystem listeners, and floating web research remain future work. Embeddings use bounded document text rather than chunk retrieval.
+
+## Publication checkpoint — 2026-11-07
+
+Implementation commit: `4395ee1`. Jordan explicitly authorized pushing this work to `origin/feat/work-recall`. A fresh detached checkout of this commit built successfully with `cargo build --offline --locked --release -j 4`, using a new build directory and the local Cargo registry cache. Toolchain: `rustc 1.99.0 (b940084d7 2026-09-28)`. This is a fresh source/build-directory check on Thor, not a fresh OS or an Amp orb check.
+
+Before the commit, the 66 tests, Clippy with warnings denied, and formatting checks were rerun successfully. No source changes followed those checks. The fresh-checkout build does not close native acceptance.
+
+Code review follow-ups assigned to the first orb: preview scrolling bounds count original lines while painting wraps them (so long wrapped content is not fully reachable); late background results while previewing may reset return selection through GUI clamping; a config error during initial worker loading may require restart even after repair. The first issue follows directly from the code paths; the latter two need targeted reproduction and regression tests. See the [orb brief](orb-plan.md).
+
+The implementation/shared-brain branch was pushed successfully to `origin/feat/work-recall` at `4395ee1` on 2026-11-07. The continuation/orb-plan documentation follows in the same branch history. `master` was not changed. No pull request or GitHub issue was posted.

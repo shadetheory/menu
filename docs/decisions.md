@@ -13,6 +13,10 @@ Record date, authority, choice, reason, and consequence. â€œEngineering choiceâ€
 | D07 / 2026-11-07 | Jordan request; contributor workflow established | Make the repo the shared brain. Record changes with reasons and maintain future work in priority/dependency order. | [AGENTS.md](../AGENTS.md), changelog, and roadmap must be updated with work. No automatic memory sync is claimed. |
 | D08 / 2026-11-07 | Engineering repair; local desktop only | Unbind the duplicate Alt+Space dictation shortcut before binding the menu, preserving other dictation keys. | Reload/config validation passed; shortcut delivery still needs verification. Config backup and findings are in [validation](work-recall-validation.md). |
 
+| D09 / 2026-11-07 | Jordan publication request; supersedes earlier R03 timing | Share all reviewed code and project context on the feature branch now, to support orbs. | Separate publication from R03A native/core acceptance. Master stays unchanged. |
+| D10 / 2026-11-07 | Jordan architectural direction; proposed implementation | The local model controls fetching. Use a typed plan and deterministic provider execution; existing recall is the first provider. | R16 precedes floating research runtime integration. Embeddings alone are not a fetch planner. |
+| D11 / 2026-11-07 | Engineering recommendation; not configured | Start with one build orb, one research/design orb, and Thor integration. Use branch-based shipping and isolated sources. | Verify setup in Amp and supported models; [orb plan](orb-plan.md) owns exact briefs and configuration. |
+
 ## Unresolved decisions
 
 - Best web/news/X/profile providers: verify real supported access and freshness during R06; do not assume availability.

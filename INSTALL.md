@@ -50,9 +50,9 @@ Rollback removes only the current version directory, and only when `share/OWNED_
 
 Stock Super+Space stays untouched.
 
-`scripts/bind-alt-space.sh` refuses and exits non-zero. It does not call hyprctl. An Alt+Space toggle may already exist outside this archive (flock + exact executable + current user + pidfd). The live script is not in this repo. This installer does not rewrite that toggle.
+`scripts/bind-alt-space.sh` refuses and exits non-zero. It does not call hyprctl. The repository includes `scripts/alt-space-toggle.sh` (flock + exact executable + current user + pidfd). The installer copies it to the owned prefix; it does not edit the desktop binding.
 
-The Wayland surface namespace is `omarchy-menu-rust` (`share/layer-namespace.txt`). A toggle that only checks a mapped X11 window will miss the layer surface. This tree does not perform that check.
+The Wayland surface namespace is `omarchy-menu-rust` (`share/layer-namespace.txt`). A toggle that only checks a mapped X11 window will miss the layer surface. The included toggle checks layer and client state.
 
 `scripts/launch-menu.sh` execs the installed binary with `--no-exec` and refuses `--live`, `--exec`, and `--run-guards`. The installer copies the helper to `$PREFIX/versions/<version>/bin/toggle-demo` and atomically points the stable path `$PREFIX/bin/toggle-demo` at that file. An existing Alt+Space binding that already runs `$PREFIX/bin/toggle-demo` stays pointed there. This installer does not edit that binding, Hyprland, or stock Super+Space.
 

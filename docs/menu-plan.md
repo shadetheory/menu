@@ -8,6 +8,10 @@ Bring prior ideas and working software into the next decision. Alt+Space should 
 
 The first audience is a builder with several local projects and agents. Music, Automation, Gate, Receiver, Listener, and Pub/Sub are the initial topic vocabulary. Topics are saved searches with editable aliases, not hardcoded application categories or a new taxonomy service.
 
+## Local model fetch planning
+
+Jordan clarified that the local model controls fetching. The next architecture layer selects providers and queries through a typed plan; deterministic adapters enforce scope and budgets and return attributable results. Current embeddings rank local documents but do not choose providers. [Planner design](local-fetch-planner.md) and R16 define the next local-only slice; online providers remain later.
+
 ## Interaction
 
 The existing launcher remains available. Add an explicit **Your work** entry, initially ahead of app shortcuts when enabled. Its empty state shows configured topic picks and a search field labelled **Find an idea or something you built**. Keep this scoped view for the first release so stock action search and semantic retrieval cannot be confused.

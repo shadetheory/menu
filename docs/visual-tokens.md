@@ -8,7 +8,7 @@ These are the numbers this Spotlight pill actually uses. They are recorded so a 
 | Idle search control | 54 |
 | Idle window | 74, which is the search control plus 10px padding |
 | Maximum height | 440 |
-| Anchor | centered on the focused output's full logical rectangle; grows down from that center, clamped inside the output |
+| Anchor | horizontally centered; panel center at 55% of the focused output's logical height, clamped inside the output |
 | Corner radius | 18 |
 | Panel background alpha | 196, premultiplied |
 | Shell | one rounded plate. The search field is text in that plate, not a second slab |
