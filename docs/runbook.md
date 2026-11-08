@@ -99,6 +99,21 @@ omarchy-menu-rust --live
 
 Use `--exec` only when a confirmed stock action should run. Dangerous names still show a confirm first.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on pushes to `master`, pull requests, and manual
+dispatch. The `Rust quality` job uses a GitHub-hosted Ubuntu 24.04 runner with
+read-only repository permissions. It installs stable Rust, caches Cargo
+dependencies and build outputs by compiler and lockfile, and runs `.agents/setup`
+to share the orb's dependency and test/release build configuration. Shell syntax,
+locked Rust/CLI tests, and warning-free Clippy must pass.
+
+This is not an Omarchy desktop acceptance check. The headless seat/state-trace
+and installer/toggle scripts are not CI gates yet: the state-trace check failed
+and the toggle check was intermittent during orb validation. Native acceptance
+still needs those checks stabilized and a real Omarchy environment. No private
+or self-hosted runner is configured by this workflow.
+
 ## Acceptance checklist
 
 - `cargo test` covers desktop parsing, malformed and unreadable entries, `true` / `false` guards, a shell guard that is not executed, a non-executable guard that does not hide its row, select / input / cancel, quoted Exec arguments, `--no-exec` refusal, and `--live` launch of a local test program.
