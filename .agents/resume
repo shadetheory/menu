@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Rust, system libraries, and Cargo caches survive pause/resume. This project
+# needs no credentials, databases, or persistent services to reconnect.
