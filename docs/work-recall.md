@@ -31,3 +31,7 @@ Issue drafts: [source/index contract](issues/work-recall-source.md), [retrieval]
 ## Local semantics
 
 Add `"ollama": {"enabled": true, "endpoint": "http://127.0.0.1:11434", "model": "bge-large:latest"}` to the configuration to opt in. Only loopback HTTP endpoints are accepted. Each request has a bounded deadline; unavailable embeddings fall back to lexical retrieval. Source vectors are cached by content, endpoint, and model. Documents are bounded and their embedding input is truncated; this first version retrieves documents, not individual chunks. No source text is sent to a cloud embedding service.
+
+## Optional local fetch planning
+
+A separate `planner` configuration object (`enabled`, loopback `endpoint`, generation `model`) enables a bounded query-planning step before local provider retrieval. `ollama` still configures embeddings. Native search publishes original lexical results first. Planner failures use original-query lexical fallback. See [the planner contract and current limits](local-fetch-planner.md). No persistent configuration is enabled automatically.

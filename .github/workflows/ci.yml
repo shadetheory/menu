@@ -1,0 +1,74 @@
+name: Menu CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: menu-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_BUILD_JOBS: '2'
+  RUST_BACKTRACE: '1'
+
+jobs:
+  rust:
+    name: Rust checks and release build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            build-essential pkg-config python3 \
+            libwayland-dev libxkbcommon-dev libxkbcommon-x11-dev \
+            libx11-dev libx11-xcb-dev libxcb1-dev libxcb-shape0-dev \
+            libxcb-xfixes0-dev libxcb-render0-dev libxcb-randr0-dev \
+            libxcb-xkb-dev libegl1-mesa-dev libudev-dev
+
+      - name: Install verified Rust toolchain
+        uses: dtolnay/rust-toolchain@1.99.0
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo dependencies and builds
+        uses: Swatinem/rust-cache@v2
+
+      - name: Isolate recall configuration
+        run: |
+          SHADE_RECALL_CONFIG="$RUNNER_TEMP/shade-ci-disabled-recall.json"
+          XDG_CACHE_HOME="$RUNNER_TEMP/shade-ci-cache"
+          printf 'SHADE_RECALL_CONFIG=%s\nXDG_CACHE_HOME=%s\n' "$SHADE_RECALL_CONFIG" "$XDG_CACHE_HOME" >> "$GITHUB_ENV"
+          mkdir -p "$XDG_CACHE_HOME"
+          printf '%s\n' '{"enabled":false,"sources":[]}' > "$SHADE_RECALL_CONFIG"
+
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+      - name: Run fixture-based tests
+        run: cargo test --locked --all-targets
+
+      - name: Clippy
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: Build release binaries
+        run: cargo build --locked --release
+
+      - name: Check isolated install and rollback
+        run: bash scripts/test-install.sh
+
+      - name: Check toggle with mock compositor
+        run: bash scripts/test-toggle.sh

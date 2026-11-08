@@ -2,6 +2,26 @@
 
 Record completed changes here with their reasons and evidence. Future work and priority belong in [the roadmap](docs/roadmap.md). Dates are work dates, not release claims. Entries below reconstruct the current session from the working tree and recorded checks; earlier history remains in git.
 
+## 2026-11-07 — R17: continuous integration
+
+**Why:** Jordan requested automated menu checks alongside local fetch planning.
+
+**Changed:** Added `.github/workflows/ci.yml` and `docs/ci.md`: push/PR/manual checks on Ubuntu 24.04 with Rust 1.99.0, isolated recall config, formatting, tests, Clippy, release build, installer/rollback and mock toggle checks.
+
+**Verification:** YAML and shell-block syntax checked; isolated installer and toggle tests passed locally. Hosted execution is the remaining acceptance gate.
+
+**Limits:** CI does not prove Thor's compositor/physical shortcut behavior or local-model performance.
+
+## 2026-11-07 — R16: first local fetch planner
+
+**Why:** Jordan approved continuing with the first local model → fetch → original result loop, retaining lexical usefulness when planning fails.
+
+**Changed:** Added strict one-request plan validation and an opt-in loopback Ollama generation adapter in `src/fetch.rs`; factored reusable bounded HTTP transport in `src/recall.rs`; added optional planner configuration; routed CLI and native background retrieval through the planner/provider path. Original-query lexical results remain the fallback. Source records never enter the planner prompt or executable dispatch.
+
+**Verification:** Added contract, provider rejection, query/result budget, fallback, and real loopback HTTP fixture tests. Existing stale-query UI tests remain. 67 binary tests and 2 integration tests passed with local socket permission; Clippy, formatting, and diff checks passed. Live model quality and installed native behavior remain separate acceptance gates.
+
+**Limits:** Only `local_recall` is registered, no external fetching or new services. Planner time budget is five seconds after two live two-second timeouts, with existing optional semantic retrieval afterward. In-flight requests are bounded but not actively cancelled. No persistent config changed and no install/push performed by this implementation task.
+
 ## 2026-11-07 — R00/R15/R16: continuation, orb plan, and local fetch planning
 
 **Why:** Jordan requested publishing all project context, a continuation diagram, and an Amp orb configuration plan. He then clarified the central architecture: the local model controls fetching.

@@ -3,6 +3,7 @@ mod clipboard;
 mod desktop;
 #[allow(dead_code)]
 mod dispatch;
+mod fetch;
 mod guards;
 mod gui;
 mod inspect;
@@ -160,7 +161,7 @@ fn work_cli(query: Option<&str>, inspect_id: Option<&str>) -> Result<(), String>
         );
         println!("{}", r.text);
     } else {
-        let result = recall::retrieve(&records, &cfg, query.unwrap_or_default(), 10);
+        let result = fetch::retrieve(&records, &cfg, query.unwrap_or_default(), 10);
         println!("retrieval: {}", result.status);
         let hits = result.hits;
         if hits.is_empty() {

@@ -302,22 +302,14 @@ fn worker(
         let _ = reply.send(Reply::Results {
             generation: request.generation,
             hits: lexical,
-            status: format!("Lexical results; checking semantic retrieval…{health}"),
+            status: format!("Lexical results; checking local retrieval…{health}"),
         });
-        if cfg.ollama.as_ref().is_some_and(|o| o.enabled) {
-            let result = recall::retrieve(&records, &cfg, &request.query, 20);
-            let _ = reply.send(Reply::Results {
-                generation: request.generation,
-                hits: result.hits,
-                status: format!("{}{health}", result.status),
-            });
-        } else {
-            let _ = reply.send(Reply::Results {
-                generation: request.generation,
-                hits: recall::search(&records, &request.query, 20),
-                status: format!("Lexical (semantic disabled){health}"),
-            });
-        }
+        let result = crate::fetch::retrieve(&records, &cfg, &request.query, 20);
+        let _ = reply.send(Reply::Results {
+            generation: request.generation,
+            hits: result.hits,
+            status: format!("{}{health}", result.status),
+        });
     }
 }
 

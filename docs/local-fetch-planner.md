@@ -1,6 +1,6 @@
 # Local model controls fetching
 
-Status: Jordan's product direction, recorded 2026-11-07; planner design below is proposed, not implemented. Current code uses embeddings to rank explicitly configured local documents. Embedding retrieval is not a model choosing tools or providers.
+Status: opt-in local prototype implemented 2026-11-07. Jordan authorized proceeding with the first query-to-fetch slice; this does not close R03A native acceptance. The planner chooses a local recall query; embeddings remain a separate optional ranking layer. Broader multi-provider planning below remains proposed.
 
 ## Product shape
 
@@ -41,3 +41,25 @@ Existing configured permissions define the source scope. The first implementatio
 5. Add web/news/X/profile adapters only after R06 establishes supported access. Integrate the floating research flow in R07 after R04 and R16.
 
 Open decisions: exact generation model/API, schema field names, latency budget, maximum fan-out, and entity-resolution provider. The research orb proposes these with evidence; the build orb implements a reviewed bounded slice. A local-model loop that recursively fetches without a budget is outside this plan.
+
+## Implemented first slice
+
+`src/fetch.rs` accepts a strict version-1 plan with exactly one request:
+
+```json
+{"version":1,"requests":[{"provider":"local_recall","query":"music","limit":10}]}
+```
+
+Unknown fields/providers, blank or control-containing queries, queries over 256 bytes, and limits outside 1–20 are rejected. No command, URL, path, freshness, or entity fields are accepted in this first schema. The provider wraps the existing local retrieval function. Returned records retain their original source attribution.
+
+Opt in with a separate `planner` object in recall configuration: `enabled`, loopback `endpoint`, and generation `model`. Its shape matches `ollama`, but `ollama` continues to configure embeddings. No generation model is chosen or downloaded automatically. With no enabled planner, existing recall behavior is unchanged.
+
+The adapter uses [Ollama /api/generate](https://docs.ollama.com/api/generate), nonstreaming JSON output, temperature zero, and at most 160 generated tokens. Transport reuses the loopback-only HTTP helper, with a five-second response deadline and 64 KiB response ceiling. The query and fixed provider contract are sent; original source documents are not in the planner prompt. Native UI publishes lexical results before planning; late generations are ignored by the existing UI generation checks. CLI `--work-search` uses the same planner/provider path.
+
+Malformed, offline, incomplete, or timed-out planning falls back to lexical search of the **original** query, with a visible reason. A rewritten query with no results also falls back. Successful planning may take up to five seconds plus the existing optional semantic request budget; cancellation currently discards stale replies rather than interrupting in-flight TCP work. Incorrect rewrites that return plausible but irrelevant results still need quality evaluation. The local-generation model evaluation and installed native acceptance remain separate checks.
+
+Two live warm/cold attempts with the resident generation model exceeded the initial two-second deadline and correctly fell back to lexical Music results. The prototype deadline was raised to five seconds for evaluation while preserving immediate native lexical results. This is not evidence of a completed model selection or a proven latency target.
+
+### Live evaluation on Thor — 2026-11-07
+
+Used the already resident `qwen3-coder-next:48k` via temporary configuration, keeping the installed menu configuration unchanged. Two attempts at a two-second planner deadline timed out and returned original-query lexical results. With the five-second bound, `music` completed through the local planner and hybrid recall, returning Music player and Music scenes and playlists first. This is one successful real-corpus query, not a routing-quality or latency benchmark. The optional embedding step has its separate deadline. No model was downloaded.

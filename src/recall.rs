@@ -35,6 +35,8 @@ fn default_kind() -> String {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Config {
     #[serde(default)]
+    pub planner: Option<OllamaConfig>,
+    #[serde(default)]
     pub enabled: bool,
     #[serde(default)]
     pub sources: Vec<SourceSpec>,
@@ -537,12 +539,14 @@ fn decode_chunked(mut raw: &[u8]) -> Result<Vec<u8>, String> {
         raw = &raw[size + 2..];
     }
 }
-fn embed(
-    endpoint: &Endpoint,
-    model: &str,
-    input: &[String],
+pub(crate) fn local_post(
+    endpoint_url: &str,
+    route: &str,
+    payload: &serde_json::Value,
     deadline: Instant,
-) -> Result<Vec<Vec<f32>>, String> {
+    max_bytes: usize,
+) -> Result<Vec<u8>, String> {
+    let endpoint = parse_endpoint(endpoint_url)?;
     let remaining = deadline.saturating_duration_since(Instant::now());
     if remaining.is_zero() {
         return Err("Ollama request timed out".into());
@@ -556,10 +560,8 @@ fn embed(
     stream
         .set_read_timeout(Some(Duration::from_millis(250)))
         .map_err(|e| e.to_string())?;
-    let body =
-        serde_json::to_vec(&serde_json::json!({"model":model,"input":input,"truncate":true}))
-            .map_err(|e| e.to_string())?;
-    let request = format!("POST /api/embed HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", endpoint.host, body.len());
+    let body = serde_json::to_vec(payload).map_err(|e| e.to_string())?;
+    let request = format!("POST {route} HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", endpoint.host, body.len());
     stream
         .write_all(request.as_bytes())
         .and_then(|_| stream.write_all(&body))
@@ -573,7 +575,7 @@ fn embed(
         match stream.read(&mut buf) {
             Ok(0) => break,
             Ok(n) => {
-                if response.len() + n > MAX_HTTP_BYTES {
+                if response.len() + n > max_bytes {
                     return Err("Ollama response too large".into());
                 }
                 response.extend_from_slice(&buf[..n]);
@@ -611,6 +613,22 @@ fn embed(
     } else {
         response[split + 4..].to_vec()
     };
+    Ok(body)
+}
+fn embed(
+    endpoint: &Endpoint,
+    model: &str,
+    input: &[String],
+    deadline: Instant,
+) -> Result<Vec<Vec<f32>>, String> {
+    let url = format!("http://{}:{}", endpoint.host, endpoint.address.port());
+    let body = local_post(
+        &url,
+        "/api/embed",
+        &serde_json::json!({"model":model,"input":input,"truncate":true}),
+        deadline,
+        MAX_HTTP_BYTES,
+    )?;
     #[derive(Deserialize)]
     struct EmbedResponse {
         embeddings: Vec<Vec<f32>>,
@@ -921,6 +939,7 @@ mod tests {
         fs::write(&b, "beta").unwrap();
         let cache = dir.join("cache.json");
         let mut cfg = Config {
+            planner: None,
             enabled: true,
             sources: vec![spec("a", a.clone()), spec("b", b.clone())],
             ollama: None,
@@ -999,6 +1018,7 @@ mod tests {
         assert_eq!(decode_chunked(b"3\r\nabc\r\n0\r\n\r\n").unwrap(), b"abc");
         assert!(decode_chunked(b"3\r\nab\r\n0\r\n\r\n").is_err());
         let cfg = Config {
+            planner: None,
             enabled: true,
             sources: vec![],
             ollama: Some(OllamaConfig {
@@ -1113,6 +1133,7 @@ mod tests {
         let dir = scratch();
         let path = dir.join("cache.json");
         let cfg = Config {
+            planner: None,
             enabled: true,
             sources: vec![],
             ollama: Some(OllamaConfig {
