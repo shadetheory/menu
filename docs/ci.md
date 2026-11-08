@@ -20,3 +20,7 @@ gh run view RUN_ID --log-failed
 ```
 
 The action references and inputs were checked against their maintainers' documentation: [checkout](https://github.com/actions/checkout), [Rust toolchain](https://github.com/dtolnay/rust-toolchain), and [Rust cache](https://github.com/Swatinem/rust-cache). Toolchain upgrades should be deliberate and validated with the locked dependency graph.
+
+## Hosted verification
+
+First run passed on implementation commit `83ebb3c`: [Menu CI](https://github.com/shadetheory/menu/actions/runs/42438635168). Formatting, all-target tests, Clippy, release build, installer/rollback, and mock toggle checks all succeeded on GitHub Ubuntu 24.04. This does not establish native Thor acceptance.

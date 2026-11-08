@@ -25,7 +25,7 @@ Every future task belongs here or in a linked issue with an owning row. Acceptan
 | 14 / R13 | P2 / open discovery | Evidence-backed personal product principles and relationship to shadetheory.dev, including the earlier request for ten core values. | None; independent research | Cite relevant work/preferences, separate inference from direct statements, and obtain Jordan's review before labeling personal values as confirmed. |
 | 15 / R14 | P3 / deferred | Wider plugin surface, inbox/groceries/contacts, other floating apps, and marketplace ideas. | A successful narrow provider flow, then a concrete use case | Create a bounded issue with a supported interface, dependencies, and acceptance before implementation. [Earlier plugin note](plugin-future.md) is speculative; these features are not connected. |
 
-| 4d / R17 | P0 / workflow added; hosted run pending | CI for every branch push and pull request. | Reviewed source checkpoint | GitHub run passes formatting, tests, Clippy, release, installer and mock toggle checks. See [CI](ci.md). |
+| 4d / R17 | P0 / verified on 83ebb3c | CI for every branch push and pull request. | Reviewed source checkpoint | GitHub run passes formatting, tests, Clippy, release, installer and mock toggle checks. See [CI](ci.md). |
 
 ## Priority changes
 

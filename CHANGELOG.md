@@ -8,7 +8,7 @@ Record completed changes here with their reasons and evidence. Future work and p
 
 **Changed:** Added `.github/workflows/ci.yml` and `docs/ci.md`: push/PR/manual checks on Ubuntu 24.04 with Rust 1.99.0, isolated recall config, formatting, tests, Clippy, release build, installer/rollback and mock toggle checks.
 
-**Verification:** YAML and shell-block syntax checked; isolated installer and toggle tests passed locally. Hosted execution is the remaining acceptance gate.
+**Verification:** YAML and shell-block syntax checked; isolated installer and toggle tests passed locally. Hosted run [42438635168](https://github.com/shadetheory/menu/actions/runs/42438635168) passed every step on `83ebb3c`.
 
 **Limits:** CI does not prove Thor's compositor/physical shortcut behavior or local-model performance.
 
