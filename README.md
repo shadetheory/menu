@@ -1,5 +1,7 @@
 # Omarchy menu Rust scaffold
 
+Project context starts in the [shared project brain](docs/project-brain.md). Read the [ordered backlog](docs/roadmap.md), [decision log](docs/decisions.md), and [change history](CHANGELOG.md) when continuing work. [AGENTS.md](AGENTS.md) defines how contributors keep them current.
+
 `omarchy-menu-rust` is a standalone Rust app that runs alongside Omarchy. It is not an official QML shell plugin. Official plugins are `manifest.json` plus QML, installed with `omarchy plugin add` ([shell plugins manual](https://omarchy.org/manual/shell-plugins/), [shell/plugins/README.md](https://github.com/basecamp/omarchy/blob/quattro/shell/plugins/README.md)). This program does not replace the stock Quickshell `omarchy.menu` and it does not bind Super+Space.
 
 ```bash
@@ -7,9 +9,9 @@ cargo build --release
 ./target/release/omarchy-menu-rust
 ```
 
-The release binary is `target/release/omarchy-menu-rust`. The default does not start commands, guards, or a clipboard tool. `--no-exec` means the same thing. `--live` is the opt-in for a confirmed desktop app or `omarchy-*` program, passed as argv. `--exec` is a separate opt-in for a trusted stock action. The last of those three flags wins for app launch only. Guards run only with `--run-guards` plus an exact grant. Search text is never placed in `bash -c`. Keyboard and a left click both navigate. The click is not saved across sessions. The launch flow is in [docs/runbook.md](docs/runbook.md).
+The release binary is `target/release/omarchy-menu-rust`. The default does not start commands, guards, or a clipboard tool. `--no-exec` means the same thing. `--live` is the opt-in for a confirmed desktop app or `omarchy-*` program, passed as argv. `--exec` is a separate opt-in for a trusted stock action. `--no-exec` refuses every launch regardless of flag order. `--safe-apps`, `--live`, and `--exec` are valid only individually; mixing them is an error. Guards run only with `--run-guards` plus an exact grant. Search text is never placed in `bash -c`. Keyboard and a left click both navigate. The click is not saved across sessions. The launch flow is in [docs/runbook.md](docs/runbook.md).
 
-On Wayland the window is a panel-sized layer surface named `omarchy-menu-rust`: 680 wide, a 54px search, growing down to 440. The panel background is translucent. Glyph interiors are opaque. X11 shows the same layout as an opaque window and prints that the desktop does not show through. A click outside the panel still reaches the window underneath. That is unsolved. This build is not a daily driver. An already installed copy stays the safe one until this binary is tested there.
+On Wayland the window is a panel-sized layer surface named `omarchy-menu-rust`: 680 wide, a 54px search, growing down to 440. The panel background is translucent. Glyph interiors are opaque. X11 shows the same layout as an opaque window and prints that the desktop does not show through. On Wayland, a visible dim layer on the focused output consumes outside presses and dismisses the panel; see [outside-click evidence](docs/outside-click.md). This build remains experimental. An already installed copy stays the safe one until this binary is tested there.
 
 Prefix install, dependency notes, and rollback live in [INSTALL.md](INSTALL.md). That page is the installer procedure. This file does not repeat it.
 
@@ -17,7 +19,7 @@ If `~/.local/state/omarchy/current/theme/colors.toml` exists, background, foregr
 
 One reported install was omarchy `4.0.6-1`, version file `4.0.0.alpha`, Quickshell `0.3.2.r7`. That is a tested-on note, not universal support. Menu contract pin: `14abc0762ce38547d1912061969df58962f6f10a` ([docs/menu.md](https://github.com/basecamp/omarchy/blob/fa955bfa/docs/menu.md)).
 
-Music, bots, groceries, inbox, and store rows are hidden. They are not shown as live panels. Real desktop apps and the enabled Omarchy actions stay. A future CLI or REST plugin contract is written in [docs/plugin-future.md](docs/plugin-future.md) and is not built. The pill's measured sizes are in [docs/visual-tokens.md](docs/visual-tokens.md). That note is not a separate theme package.
+Music, bots, groceries, inbox, and store rows are hidden. When configured, Your work adds topic picks, hybrid local retrieval, and read-only source previews to the native menu, alongside `--work-search` / `--work-inspect`. See [docs/work-recall.md](docs/work-recall.md). It is read-only and does not alter action routing or launch permissions. Real desktop apps and enabled Omarchy actions stay. A future CLI or REST plugin contract is written in [docs/plugin-future.md](docs/plugin-future.md) and is not built. The pill's measured sizes are in [docs/visual-tokens.md](docs/visual-tokens.md). That note is not a separate theme package.
 
 The HTML tree under [preview/](preview/README.md) is a nonfunctional mock, not this program.
 

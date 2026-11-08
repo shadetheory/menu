@@ -1,0 +1,3 @@
+# Issue draft: native menu Work workflow
+
+See [menu plan](../menu-plan.md), issue 3. Depends on source and retrieval contracts. Add Your work to the native GUI: configurable topic picks, search, title/project/excerpt rows, original path/date/kind, truthful source/retrieval state, and a scrollable in-process preview. Escape restores query and selection before closing. Preview cannot spawn under `--no-exec`; result objects never enter command dispatch. Verify Music, Automation, and Gate against an explicit real corpus on the live Alt+Space menu, including rapid typing and embedding outage. Preserve a rollback build. Related: #13 (integration direction), #3/#4 (launch state/policy), #6 (native visual evidence). External open and task dispatch are separate follow-ups.

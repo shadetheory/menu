@@ -1,0 +1,3 @@
+# Issue draft: Work recall source/index contract
+
+See [menu plan](../menu-plan.md), issue 1. Implement and verify `recall::Record` v1: explicit-file ingestion, provenance, reconcile changes/deletions, deterministic event application, and atomic derived-cache recovery. Source and metadata changes invalidate the appropriate derived state. Repeated events are idempotent; missing sources do not suppress healthy ones. Reject unsupported, oversized, and symlinked inputs. Keep originals authoritative. This issue does not enable execution or scan directories. Draft code exists; completion requires reviewed tests.

@@ -1,0 +1,3 @@
+# Issue draft: Work recall retrieval
+
+See [menu plan](../menu-plan.md), issue 2. Depends on source records. Add offline lexical ranking and optional local-only Ollama `/api/embed` with bounded deadlines, validated dimensions/finiteness, model+fingerprint vector cache, query generation cancellation, stale-result rejection, and explicit lexical fallback. Return lexical results promptly while semantics runs off the UI thread. Deduplicate by source identity. Test outage, invalid vector/cache data, content changes, and stale generations. Similarity is never factual confidence. Draft engine work exists; native background integration remains required.
