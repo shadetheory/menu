@@ -2,6 +2,16 @@
 
 Record completed changes here with their reasons and evidence. Future work and priority belong in [the roadmap](docs/roadmap.md). Dates are work dates, not release claims. Entries below reconstruct the current session from the working tree and recorded checks; earlier history remains in git.
 
+## 2026-11-07 — R01/R16: install current local menu
+
+**Why:** Jordan requested updating the installed menu to match the project work.
+
+**Changed:** Bumped `share/version` to `0.1.0-fetch-planner-20261107`, built/installed that version, preserved the prior installation, and enabled the local planner in backed-up private configuration.
+
+**Verification:** Installed executable identity, Music results, visual capture, and Escape dismissal passed. CLI exercised the original-query lexical fallback after a model timeout. See the latest installation section in `docs/work-recall-validation.md` for binary digest and limits.
+
+**Limits:** Planner latency remains variable; physical shortcut acceptance and earlier preview follow-ups remain open. No new online provider was enabled.
+
 ## 2026-11-07 — R17: continuous integration
 
 **Why:** Jordan requested automated menu checks alongside local fetch planning.

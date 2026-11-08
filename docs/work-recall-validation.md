@@ -39,3 +39,9 @@ Before the commit, the 66 tests, Clippy with warnings denied, and formatting che
 Code review follow-ups assigned to the first orb: preview scrolling bounds count original lines while painting wraps them (so long wrapped content is not fully reachable); late background results while previewing may reset return selection through GUI clamping; a config error during initial worker loading may require restart even after repair. The first issue follows directly from the code paths; the latter two need targeted reproduction and regression tests. See the [orb brief](orb-plan.md).
 
 The implementation/shared-brain branch was pushed successfully to `origin/feat/work-recall` at `4395ee1` on 2026-11-07. The continuation/orb-plan documentation follows in the same branch history. `master` was not changed. No pull request or GitHub issue was posted.
+
+## Installed planner update — 2026-11-07
+
+Jordan requested updating the local menu to current work. Built the release binary and installed `0.1.0-fetch-planner-20261107`, retaining `0.1.0-work-recall-20261107` for rollback. Enabled the opt-in planner using the previously evaluated resident `qwen3-coder-next:48k`; backed up the private recall config first. Config and corpus remain outside git.
+
+Installed binary SHA-256: `79af6dd4a1fe0c8cf779b5e236b3648ac0585e6413ae825c8109741fba0c71e7`. Installed CLI Music check timed out at the planner and returned correct original-query lexical Music results. The configured desktop toggle launched the new version; native Music rows were captured and visually checked, and Escape closed it. This confirms installation and usable fallback, not consistent planner latency or physical Alt+Space delivery. Existing no-exec toggle behavior remains in place.
