@@ -204,22 +204,23 @@ mod tests {
 
     #[test]
     fn no_exec_refuses_every_order_and_mixed_modes_are_rejected() {
-        let orders = [
-            vec!["--no-exec"],
-            vec!["--safe-apps", "--no-exec"],
-            vec!["--no-exec", "--safe-apps"],
-            vec!["--live", "--no-exec"],
-            vec!["--no-exec", "--live"],
-            vec!["--exec", "--no-exec"],
-            vec!["--no-exec", "--exec"],
-            vec!["--safe-apps", "--live", "--no-exec"],
-            vec!["--exec", "--safe-apps", "--no-exec"],
-            vec!["--no-exec", "--safe-apps", "--live", "--exec"],
-        ];
-        for flags in orders {
-            let (no_exec, live, safe_apps) =
-                mode(&flags).unwrap_or_else(|err| panic!("{flags:?}: {err}"));
-            assert!(no_exec && !live && !safe_apps, "{flags:?}");
+        let flags = ["--no-exec", "--safe-apps", "--live", "--exec"];
+        // Every sequence up to four flags, including repeated flags and every
+        // permutation of all four launch modes.
+        for len in 1..=flags.len() {
+            for mut index in 0..flags.len().pow(len as u32) {
+                let order: Vec<_> = (0..len)
+                    .map(|_| {
+                        let flag = flags[index % flags.len()];
+                        index /= flags.len();
+                        flag
+                    })
+                    .collect();
+                if order.contains(&"--no-exec") {
+                    let result = mode(&order).unwrap_or_else(|err| panic!("{order:?}: {err}"));
+                    assert_eq!(result, (true, false, false), "{order:?}");
+                }
+            }
         }
         assert_eq!(mode(&[]).unwrap(), (true, false, false));
         assert_eq!(mode(&["--safe-apps"]).unwrap(), (true, false, true));

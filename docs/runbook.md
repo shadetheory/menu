@@ -15,6 +15,29 @@ This binary stays beside the stock Omarchy menu. It does not bind Super+Space an
 
 An Exec string that matches a name on the list is not a safe launch. A copy in `~/.local/share/applications`, a symlink that resolves outside the system applications directory, or a same-named binary earlier on `PATH` does not start. Ghostty, Grok Bot, and Mattermost are not launchable here: the 2026-11-06 notes recorded only a basename. This check does not hash the binary. `--live` does not enable shell actions or guards. `--exec` is the switch for shell actions. It does not run guards. `--run-guards` is a separate opt-in. Even then, an argv guard runs only from an exact JSON string array, and a shell guard only from an exact `shell` line. `true` and `false` are decided in process. `--no-exec` and `--safe-apps` start no clipboard tool. Search text and the filter input are never inserted into a command. The Alt+Space toggle still starts only `--no-exec` and still refuses `--safe-apps`.
 
+### Safe-app provenance evidence and limits
+
+For an ordinary safe-app row, Enter repeats admission immediately before dispatch; it does not trust the earlier display-time admission. It canonicalizes the desktop path under a trusted root, matches its filename and allowlisted id, resolves the scanned Exec program against the current canonical allowlisted executable, and compares arguments exactly. Dispatch uses that canonical program and the allowlisted arguments, not a PATH lookup. A symlink alias to that executable is accepted; an alias retargeted to a different executable before Enter is refused.
+
+These are path checks, not an integrity or sandbox guarantee:
+
+- Ownership, permissions, and mutability of desktop files, executables, and parent directories are **not checked**. No hash or binary identity is pinned. Replacing the allowlisted executable itself, including changing its symlink target, is outside this check: both sides resolve against its current target.
+- The desktop file's contents are **not reread** at launch; its path is rechecked against the row's already-scanned id and argv. Replacement with another file at the same trusted path is not detected as an integrity change.
+- Admission and spawn are separate filesystem operations. Replacement between them is **not prevented**; no file descriptor pins the executable through exec.
+- Working directory is **not checked or isolated**; the child inherits the menu process's cwd. Environment is **not allowlisted or cleared**; it is inherited except that dispatch removes `OMARCHY_MENU_QUERY`. Inherited environment can still affect the launched program or its interpreter.
+
+Repeatable orb checks for issue #2:
+
+```bash
+cargo test --locked gui::tests::safe_apps_starts_only_the_documented_desktop_exec -- --exact
+cargo test --locked safe_apps::tests::shadow_desktop_and_path_do_not_replace_the_documented_file -- --exact
+cargo test --locked tests::no_exec_refuses_every_order_and_mixed_modes_are_rejected -- --exact
+```
+
+The first test drives the menu model's Enter path through the real dispatcher and waits for a temporary fixture script to exit. It records the canonical executable, exact `--gui` argument, inherited cwd and HOME, and absence of `OMARCHY_MENU_QUERY`. It then changes an executable symlink and a desktop symlink after the row was displayed, and checks that neither the admitted nor substitute script runs; a direct substitute executable is also refused. The second test covers a shadow desktop file and a same-named PATH substitute. All app executables in these fixtures live under temporary directories; no installed Flea or Cursor is started. The launch-mode test exhausts all flag sequences of length one through four containing `--no-exec`, including all permutations of the four mode flags and repeated flags. The menu test also checks that default no-exec does not launch the allowlisted fixture.
+
+This is a real fixture-process launch in an orb, **not native installed-app provenance proof**, a compositor interaction test, or proof that the unchecked properties above are safe. Production allowlist and launch behavior are unchanged.
+
 The window is one 680px translucent shell. Idle search is 54px of that shell, not a second rounded slab. It grows down to 440px. Focus is a one-pixel border. Wayland uses layer-shell namespace `omarchy-menu-rust` and a premultiplied ARGB buffer. X11 is an opaque fallback and prints that. A press on the visible dim layer dismisses the menu. That layer is `omarchy-menu-rust-dim`, on the focused output only. See [outside-click.md](outside-click.md). `scripts/launch-menu.sh` starts only `--no-exec`. `scripts/alt-space-toggle.sh` reads layer namespace and client map state, dismisses a mapped menu, or starts one `--no-exec`. It does not bind a key. `scripts/bind-alt-space.sh` still refuses and does not call hyprctl. Stock Super+Space stays untouched. The menu keeps the configured Omarchy font, including a monospace face. It does not swap in a proportional face.
 
 ## One step at a time

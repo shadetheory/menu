@@ -3438,7 +3438,10 @@ mod tests {
             }
             std::fs::write(
                 path,
-                format!("#!/bin/sh\nprintf '%s\\n' \"$0\" > '{}'\n", dest.display()),
+                format!(
+                    "#!/bin/sh\n{{ printf '%s\\n' \"$0\" \"$@\"; pwd -P; printf '%s\\n' \"$HOME\" \"${{OMARCHY_MENU_QUERY-unset}}\"; }} > '{}'\n",
+                    dest.display()
+                ),
             )
             .unwrap();
             use std::os::unix::fs::PermissionsExt;
@@ -3448,6 +3451,8 @@ mod tests {
         };
         write_script(&real, &mark);
         write_script(&shadow, &shadow_mark);
+        let exec_link = dir.join("flea-link");
+        std::os::unix::fs::symlink(&real, &exec_link).unwrap();
         let desktop = root.join("com.thisisgm.flea.desktop");
         std::fs::write(
             &desktop,
@@ -3474,8 +3479,8 @@ mod tests {
                 title: "Flea".into(),
                 hint: "Desktop entry. One Enter opens it.".into(),
                 desktop_id: "com.thisisgm.flea.desktop".into(),
-                desktop_file: desktop,
-                argv: vec!["flea".into(), "--gui".into()],
+                desktop_file: desktop.clone(),
+                argv: vec![exec_link.to_string_lossy().into_owned(), "--gui".into()],
                 input_at: None,
                 terminal: false,
                 unavailable: false,
@@ -3509,18 +3514,64 @@ mod tests {
         let mut model = Model::new(stock_menu(), true);
         model.safe_apps = true;
         model.app_rows = vec![shown];
-        model.enter(|_| {});
-        let start = std::time::Instant::now();
-        while start.elapsed() < std::time::Duration::from_secs(2) && !mark.exists() {
-            std::thread::sleep(std::time::Duration::from_millis(20));
-        }
+        let (tx, rx) = std::sync::mpsc::channel();
+        model.enter(move |result| tx.send(result).unwrap());
+        assert_eq!(
+            rx.recv_timeout(std::time::Duration::from_secs(2)).unwrap(),
+            "exited 0."
+        );
         let recorded = std::fs::read_to_string(&mark).expect("canonical launcher log");
         assert_eq!(
-            recorded.trim(),
-            std::fs::canonicalize(&real).unwrap().to_string_lossy()
+            recorded.lines().collect::<Vec<_>>(),
+            vec![
+                std::fs::canonicalize(&real)
+                    .unwrap()
+                    .to_string_lossy()
+                    .into_owned(),
+                "--gui".into(),
+                std::env::current_dir()
+                    .unwrap()
+                    .canonicalize()
+                    .unwrap()
+                    .to_string_lossy()
+                    .into_owned(),
+                std::env::var("HOME").unwrap(),
+                "unset".into(),
+            ]
         );
         assert!(!shadow_mark.exists());
         let _ = std::fs::remove_file(&mark);
+
+        // The row was admitted for display, but Enter must recheck both paths.
+        model.should_close = false;
+        std::fs::remove_file(&exec_link).unwrap();
+        std::os::unix::fs::symlink(&shadow, &exec_link).unwrap();
+        model.enter(|_| panic!("a substituted executable symlink must not start"));
+        assert!(model.status.contains("Dry run"));
+        assert!(!model.should_close);
+        assert!(!mark.exists());
+        assert!(!shadow_mark.exists());
+        std::fs::remove_file(&exec_link).unwrap();
+        std::os::unix::fs::symlink(&real, &exec_link).unwrap();
+
+        let saved_desktop = dir.join("saved.desktop");
+        std::fs::rename(&desktop, &saved_desktop).unwrap();
+        std::os::unix::fs::symlink(&saved_desktop, &desktop).unwrap();
+        model.notice = None;
+        model.enter(|_| panic!("a desktop symlink outside the trusted root must not start"));
+        assert!(model.status.contains("Dry run"));
+        assert!(!model.should_close);
+        assert!(!mark.exists());
+        assert!(!shadow_mark.exists());
+        std::fs::remove_file(&desktop).unwrap();
+        std::fs::rename(&saved_desktop, &desktop).unwrap();
+
+        model.notice = None;
+        model.app_rows[0].argv[0] = shadow.to_string_lossy().into_owned();
+        model.enter(|_| panic!("a substitute executable must not start"));
+        assert!(model.status.contains("Dry run"));
+        assert!(!mark.exists());
+        assert!(!shadow_mark.exists());
 
         model.should_close = false;
         model.app_rows = vec![hidden];
