@@ -11,6 +11,7 @@ use crate::bots::{self, Bot};
 use crate::dispatch::{self, PlanError, SpawnPlan};
 use crate::model::{self, fuzzy_hit, is_visible, matches_query, search_score, Item, Kind, Menu};
 use crate::providers;
+use crate::recall_ui::{Stage as WorkStage, WorkUi, TOPICS};
 use crate::theme;
 use fontdue::Font;
 use std::collections::BTreeMap;
@@ -183,9 +184,57 @@ struct Model {
     answer: Option<String>,
     copy_focus: bool,
     copied: Option<String>,
+    work: Option<WorkUi>,
+    work_open: bool,
 }
 
 impl Model {
+    fn poll_work(&mut self) -> bool {
+        let changed = self.work.as_mut().is_some_and(WorkUi::poll);
+        if changed && self.work_open {
+            self.cursor = self.work.as_ref().map_or(0, |work| work.cursor);
+            self.clamp();
+        }
+        changed
+    }
+
+    fn work_key(&mut self, keysym: &str, utf8: Option<&str>, repeat: bool) {
+        let Some(work) = &mut self.work else {
+            return;
+        };
+        match keysym {
+            "Escape" => self.go_back(),
+            "Return" | "KP_Enter" if !repeat => {
+                work.cursor = self.cursor;
+                work.enter();
+                self.cursor = work.cursor;
+            }
+            "Up" => {
+                work.move_up();
+                self.cursor = work.cursor;
+            }
+            "Down" => {
+                work.move_down();
+                self.cursor = work.cursor;
+            }
+            "BackSpace" if work.stage != WorkStage::Preview => {
+                let mut q = work.query.clone();
+                q.pop();
+                work.set_query(q);
+                self.cursor = 0;
+            }
+            _ if !repeat && work.stage != WorkStage::Preview => {
+                if let Some(input) = utf8.filter(|s| !s.chars().any(char::is_control)) {
+                    if work.query.len() + input.len() <= 256 {
+                        work.set_query(format!("{}{}", work.query, input));
+                        self.cursor = 0;
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
     fn new(menu: Menu, no_exec: bool) -> Self {
         Self {
             menu,
@@ -219,6 +268,8 @@ impl Model {
             answer: None,
             copy_focus: false,
             copied: None,
+            work: None,
+            work_open: false,
         }
     }
 
@@ -236,6 +287,45 @@ impl Model {
     }
 
     fn rows(&self) -> Vec<Row> {
+        if self.work_open {
+            let Some(work) = &self.work else {
+                return Vec::new();
+            };
+            return match work.stage {
+                WorkStage::Topics => TOPICS
+                    .iter()
+                    .enumerate()
+                    .map(|(i, topic)| Row {
+                        id: format!("work:topic:{i}"),
+                        title: (*topic).into(),
+                        hint: "Saved topic search".into(),
+                        verb: "Find".into(),
+                        ..Row::default()
+                    })
+                    .collect(),
+                WorkStage::Results => work
+                    .hits
+                    .iter()
+                    .map(|hit| Row {
+                        id: format!("work:source:{}", hit.record.id),
+                        title: hit.record.title.clone(),
+                        hint: format!(
+                            "{} · {} · {}",
+                            hit.record.project,
+                            hit.record.kind,
+                            hit.record
+                                .text
+                                .lines()
+                                .find(|line| !line.trim().is_empty())
+                                .unwrap_or("")
+                        ),
+                        verb: "Read".into(),
+                        ..Row::default()
+                    })
+                    .collect(),
+                WorkStage::Preview => Vec::new(),
+            };
+        }
         match &self.view {
             View::Input { .. } => Vec::new(),
             View::Select { rows, .. } => {
@@ -363,7 +453,21 @@ impl Model {
     }
 
     fn shortcut_rows(&self) -> Vec<Row> {
-        shortcut_rows_from(&self.app_rows, |path| std::path::Path::new(path).is_file())
+        let mut rows =
+            shortcut_rows_from(&self.app_rows, |path| std::path::Path::new(path).is_file());
+        if self.work.is_some() {
+            rows.insert(
+                0,
+                Row {
+                    id: "work:open".into(),
+                    title: "Your work".into(),
+                    hint: "Find an idea or something you built".into(),
+                    verb: "Browse".into(),
+                    ..Row::default()
+                },
+            );
+        }
+        rows
     }
 
     fn load_apps(&mut self) {
@@ -448,6 +552,18 @@ impl Model {
     }
 
     fn clamp(&mut self) {
+        if self.work_open {
+            if let Some(work) = &mut self.work {
+                let n = match work.stage {
+                    WorkStage::Topics => TOPICS.len(),
+                    WorkStage::Results => work.hits.len(),
+                    WorkStage::Preview => 0,
+                };
+                work.cursor = work.cursor.min(n.saturating_sub(1));
+                self.cursor = work.cursor;
+            }
+            return;
+        }
         let n = self.rows().len();
         if n == 0 {
             self.cursor = 0;
@@ -492,6 +608,10 @@ impl Model {
     }
 
     fn wayland_key(&mut self, keysym: &str, utf8: Option<&str>, repeat: bool) {
+        if self.work_open {
+            self.work_key(keysym, utf8, repeat);
+            return;
+        }
         match keysym {
             "Escape" => {
                 self.go_back();
@@ -555,6 +675,14 @@ impl Model {
     }
 
     fn enter(&mut self, report: impl Fn(String) + Send + 'static) {
+        if self.work_open {
+            if let Some(work) = &mut self.work {
+                work.cursor = self.cursor;
+                work.enter();
+            }
+            self.cursor = self.work.as_ref().map_or(0, |w| w.cursor);
+            return;
+        }
         if self.stale {
             self.status = "Results are outdated. Activation ignored. Nothing was started.".into();
             return;
@@ -624,6 +752,13 @@ impl Model {
         }
         if row.id == "__filter__" {
             self.open_filter_input();
+            return;
+        }
+        if row.id == "work:open" {
+            self.push_place();
+            self.work_open = true;
+            self.cursor = self.work.as_ref().map_or(0, |work| work.cursor);
+            self.status = "Your work is read-only. Enter previews an original source.".into();
             return;
         }
         if row.unavailable || row.verb == "Unavailable" || row.verb == "Disabled" {
@@ -952,6 +1087,20 @@ impl Model {
     }
 
     fn go_back(&mut self) {
+        if self.work_open {
+            if self.work.as_mut().is_some_and(WorkUi::back) {
+                self.work_open = false;
+                if let Some(place) = self.stack.pop() {
+                    self.active = place.active;
+                    self.query = place.query;
+                    self.cursor = place.cursor;
+                    self.view = place.view;
+                }
+            } else {
+                self.cursor = self.work.as_ref().map_or(0, |work| work.cursor);
+            }
+            return;
+        }
         if self.confirm.is_some() {
             self.confirm = None;
             self.status = "Cancelled. Nothing was started.".into();
@@ -1221,7 +1370,8 @@ fn wrapper_row(id: &str, title: &str, hint: &str, argv: &[&str]) -> Row {
 }
 
 fn showing_shortcuts(model: &Model) -> bool {
-    model.query.trim().is_empty()
+    !model.work_open
+        && model.query.trim().is_empty()
         && model.active == "root"
         && !side_open(model)
         && matches!(model.view, View::Tree)
@@ -1335,10 +1485,26 @@ fn refusal_code(status: &str) -> &'static str {
 /// One line of internal state. Printed only when `--trace-state` is passed.
 fn state_trace(model: &Model) -> String {
     let rows = model.rows();
-    let (selected, verb) = rows
+    let (mut selected, mut verb) = rows
         .get(model.cursor)
         .map(|row| (row.title.as_str(), row.verb.as_str()))
         .unwrap_or(("", ""));
+    let query = if model.work_open {
+        let work = model.work.as_ref();
+        if let Some(record) = work.and_then(|w| {
+            if w.stage == WorkStage::Preview {
+                w.selected()
+            } else {
+                None
+            }
+        }) {
+            selected = &record.title;
+            verb = "Read";
+        }
+        work.map_or("", |w| w.query.as_str())
+    } else {
+        model.query.as_str()
+    };
     let (confirm, focus) = match &model.confirm {
         None => ("none", "none"),
         Some(choice) if choice.focus == 0 => ("open", "cancel"),
@@ -1346,7 +1512,7 @@ fn state_trace(model: &Model) -> String {
     };
     format!(
         "query={} selected={} verb={} confirm={} focus={} close={} refusal={}",
-        trace_field(&model.query),
+        trace_field(query),
         trace_field(selected),
         trace_field(verb),
         confirm,
@@ -1444,7 +1610,12 @@ fn paint_model(model: &Model, width: u32, height: u32) -> Pixmap {
         pill_w,
         pill_h,
         PILL_RADIUS,
-        color(theme.card.r, theme.card.g, theme.card.b, PANEL_ALPHA),
+        color(
+            theme.card.r,
+            theme.card.g,
+            theme.card.b,
+            if model.work_open { 245 } else { PANEL_ALPHA },
+        ),
     );
     let search_top = if showing_shortcuts(model) {
         (pill_h - PILL_PAD - SEARCH_H).max(PILL_PAD)
@@ -1460,7 +1631,14 @@ fn paint_model(model: &Model, width: u32, height: u32) -> Pixmap {
     let text = (theme.text.r, theme.text.g, theme.text.b);
     let muted = (theme.muted.r, theme.muted.g, theme.muted.b);
     let accent = (theme.accent.r, theme.accent.g, theme.accent.b);
-    let (shown, qcolor) = if let Some(confirm) = &model.confirm {
+    let (shown, qcolor) = if model.work_open {
+        let query = model.work.as_ref().map_or("", |work| work.query.as_str());
+        if query.is_empty() {
+            ("Find an idea or something you built".into(), muted)
+        } else {
+            (query.into(), text)
+        }
+    } else if let Some(confirm) = &model.confirm {
         (confirm.summary.clone(), text)
     } else {
         match &model.view {
@@ -1483,6 +1661,32 @@ fn paint_model(model: &Model, width: u32, height: u32) -> Pixmap {
         theme.search_px(),
         qcolor,
     );
+    if model.work_open {
+        if let Some(work) = &model.work {
+            draw_text(
+                &mut pixmap,
+                &font,
+                &clip(
+                    &font,
+                    if work.status.starts_with("hybrid (") {
+                        "Exact + related results · local search"
+                    } else {
+                        &work.status
+                    },
+                    theme.hint_px(),
+                    pill_w - 35.0,
+                ),
+                LIST_X + 8.0,
+                pill_h - 14.0,
+                theme.hint_px(),
+                muted,
+            );
+            if work.stage == WorkStage::Preview {
+                paint_work_preview(&mut pixmap, &font, &theme, work, pill_w);
+                return pixmap;
+            }
+        }
+    }
     if showing_shortcuts(model) {
         draw_text(
             &mut pixmap,
@@ -1568,11 +1772,28 @@ fn paint_model(model: &Model, width: u32, height: u32) -> Pixmap {
             );
         }
     }
-    if rows.is_empty() && !model.query.trim().is_empty() && !side_open(model) {
+    if rows.is_empty()
+        && ((model.work_open
+            && model
+                .work
+                .as_ref()
+                .is_some_and(|w| w.stage == WorkStage::Results))
+            || !model.query.trim().is_empty())
+        && !side_open(model)
+    {
         draw_text(
             &mut pixmap,
             &font,
-            "No row matches.",
+            if model.work_open
+                && model
+                    .work
+                    .as_ref()
+                    .is_some_and(|w| w.status.starts_with("Searching"))
+            {
+                "Searching…"
+            } else {
+                "No matches."
+            },
             LIST_X + 12.0,
             list_top() + 28.0,
             theme.list_px(),
@@ -1592,6 +1813,124 @@ fn paint_model(model: &Model, width: u32, height: u32) -> Pixmap {
         );
     }
     pixmap
+}
+
+fn paint_work_preview(
+    pixmap: &mut Pixmap,
+    font: &Font,
+    theme: &theme::ThemeTokens,
+    work: &WorkUi,
+    width: f32,
+) {
+    let Some(record) = work.selected() else {
+        return;
+    };
+    let text = (theme.text.r, theme.text.g, theme.text.b);
+    let muted = (theme.muted.r, theme.muted.g, theme.muted.b);
+    let available = width - 42.0;
+    let x = LIST_X + 12.0;
+    draw_text(
+        pixmap,
+        font,
+        &clip(font, &record.title, theme.list_px(), available),
+        x,
+        list_top() + 16.0,
+        theme.list_px(),
+        text,
+    );
+    let provenance = format!(
+        "{} · {} · {}",
+        record.project,
+        record.kind,
+        source_date(record.modified_unix)
+    );
+    draw_text(
+        pixmap,
+        font,
+        &clip(font, &provenance, theme.hint_px(), available),
+        x,
+        list_top() + 39.0,
+        theme.hint_px(),
+        muted,
+    );
+    let path = record.source_path.display().to_string();
+    draw_text(
+        pixmap,
+        font,
+        &clip(font, &path, theme.hint_px(), available),
+        x,
+        list_top() + 59.0,
+        theme.hint_px(),
+        muted,
+    );
+    let columns = (available / font.metrics('M', theme.hint_px()).advance_width.max(1.0))
+        .floor()
+        .max(1.0) as usize;
+    let lines: Vec<String> = record
+        .text
+        .lines()
+        .take(400)
+        .flat_map(|line| {
+            let chars: Vec<char> = line.chars().collect();
+            if chars.is_empty() {
+                vec![String::new()]
+            } else {
+                chars
+                    .chunks(columns)
+                    .map(|chunk| chunk.iter().collect())
+                    .collect()
+            }
+        })
+        .collect();
+    let truncated = record.text.lines().nth(400).is_some();
+    for (i, line) in lines
+        .iter()
+        .skip(work.preview_scroll.min(lines.len()))
+        .take(10)
+        .enumerate()
+    {
+        draw_text(
+            pixmap,
+            font,
+            &clip(font, line, theme.hint_px(), available),
+            x,
+            list_top() + 88.0 + i as f32 * 22.0,
+            theme.hint_px(),
+            text,
+        );
+    }
+    if work.preview_scroll + 10 < lines.len() || truncated {
+        draw_text(
+            pixmap,
+            font,
+            if truncated && work.preview_scroll + 10 >= lines.len() {
+                "Preview limited to 400 lines"
+            } else {
+                "↓ more source text"
+            },
+            x,
+            385.0,
+            theme.hint_px(),
+            muted,
+        );
+    }
+}
+
+fn source_date(unix: u64) -> String {
+    // Civil date from days since the Unix epoch; source time is shown in UTC.
+    let days = (unix / 86_400) as i64 + 719_468;
+    let era = days.div_euclid(146_097);
+    let doe = days - era * 146_097;
+    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
+    let mut year = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = doy - (153 * mp + 2) / 5 + 1;
+    let month = mp + if mp < 10 { 3 } else { -9 };
+    if month <= 2 {
+        year += 1;
+    }
+    format!("{year:04}-{month:02}-{day:02} UTC")
 }
 
 struct Choice<'a> {
@@ -1969,6 +2308,18 @@ struct App {
 }
 
 impl winit::application::ApplicationHandler<UserMsg> for App {
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        if self.model.work.is_some() {
+            if self.model.poll_work() {
+                if let Some(window) = &self.window {
+                    window.request_redraw();
+                }
+            }
+            event_loop.set_control_flow(winit::event_loop::ControlFlow::WaitUntil(
+                std::time::Instant::now() + std::time::Duration::from_millis(40),
+            ));
+        }
+    }
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.window.is_some() {
             return;
@@ -2119,6 +2470,31 @@ impl App {
         repeat: bool,
         proxy: winit::event_loop::EventLoopProxy<UserMsg>,
     ) {
+        if self.model.work_open {
+            let named = match &key {
+                Key::Named(NamedKey::Escape) => "Escape",
+                Key::Named(NamedKey::Enter) => "Return",
+                Key::Named(NamedKey::ArrowUp) => "Up",
+                Key::Named(NamedKey::ArrowDown) => "Down",
+                Key::Named(NamedKey::Backspace) => "BackSpace",
+                _ => "",
+            };
+            let input = if let Key::Character(ch) = &key {
+                Some(ch.as_str())
+            } else {
+                None
+            };
+            self.model.work_key(named, input, repeat);
+            if self.model.should_close {
+                event_loop.exit();
+                return;
+            }
+            self.trace_state();
+            if let Some(window) = &self.window {
+                window.request_redraw();
+            }
+            return;
+        }
         match key {
             Key::Named(NamedKey::Escape) => {
                 self.model.go_back();
@@ -2273,6 +2649,7 @@ impl App {
 
 fn prepare_model(menu: Menu, opts: &Options) -> Model {
     let mut model = Model::new(menu, opts.no_exec);
+    model.work = WorkUi::start_if_configured();
     model.live = opts.live;
     model.safe_apps = opts.safe_apps;
     model.theme = theme::load_theme(Some(&theme::default_paths()));
@@ -2354,6 +2731,19 @@ fn center_x11_window(window: &Window, panel_w: u32, panel_h: u32) {
 }
 
 fn pill_size(model: &Model) -> (u32, u32) {
+    if model.work_open {
+        if model
+            .work
+            .as_ref()
+            .is_some_and(|work| work.stage == WorkStage::Preview)
+        {
+            return (PILL_W as u32, MAX_PILL_H as u32);
+        }
+        let rows = model.rows().len().min(6);
+        let height =
+            (list_top() + rows as f32 * model.theme.row_h() + 40.0).clamp(150.0, MAX_PILL_H);
+        return (PILL_W as u32, height as u32);
+    }
     let row_h = model.theme.row_h();
     let rows = model.rows().len();
     let (_, fit, _) = row_window(model, MAX_PILL_H);
@@ -3350,6 +3740,11 @@ mod tests {
         let flea = desktop_row(FLEA_ID, "Flea", &["flea", "--gui"], Some(2));
         model.app_rows = vec![flea];
         model.notice = None;
+        model.cursor = model
+            .rows()
+            .iter()
+            .position(|row| row.desktop_id == FLEA_ID)
+            .unwrap();
         model.enter(|_| panic!("input must not start"));
         assert!(matches!(model.view, View::Input { .. }));
         assert!(model.confirm.is_none());
@@ -3514,6 +3909,11 @@ mod tests {
         let mut model = Model::new(stock_menu(), true);
         model.safe_apps = true;
         model.app_rows = vec![shown];
+        model.cursor = model
+            .rows()
+            .iter()
+            .position(|row| row.desktop_id == FLEA_ID)
+            .unwrap();
         let (tx, rx) = std::sync::mpsc::channel();
         model.enter(move |result| tx.send(result).unwrap());
         assert_eq!(

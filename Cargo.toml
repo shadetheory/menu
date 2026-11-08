@@ -10,6 +10,7 @@ license = "AGPL-3.0-only"
 fontdue = "0.9.3"
 notify = "6.1.1"
 png = "0.17.16"
+serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
 smithay-client-toolkit = "0.19.2"
 softbuffer = "=0.4.6"

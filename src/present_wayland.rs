@@ -33,7 +33,7 @@ use smithay_client_toolkit::{
 
 pub fn run(menu: Menu, opts: Options) -> Result<(), String> {
     eprintln!(
-        "omarchy-menu-rust: Wayland layer-shell namespace omarchy-menu-rust. The panel is centered on the focused output. A visible dim layer omarchy-menu-rust-dim sits behind it on that output only and takes a press outside the pill. No xdg_popup is created."
+        "omarchy-menu-rust: Wayland layer-shell namespace omarchy-menu-rust. The panel is horizontally centered at 55% of the focused output height. A visible dim layer omarchy-menu-rust-dim sits behind it on that output only and takes a press outside the pill. No xdg_popup is created."
     );
     let conn = Connection::connect_to_env().map_err(|err| err.to_string())?;
     let (globals, mut queue) = registry_queue_init(&conn).map_err(|err| err.to_string())?;
@@ -147,6 +147,7 @@ impl Pill {
     }
 
     fn draw(&mut self, qh: &QueueHandle<Self>) {
+        self.model.poll_work();
         self.apply_geometry();
         let scale = u32::try_from(self.output_scale.max(1)).unwrap_or(1);
         let _ = self.layer.set_buffer_scale(scale);
@@ -233,7 +234,7 @@ impl Pill {
                 panel_h,
             );
             eprintln!(
-                "omarchy-menu-rust: center output {:?} logical {}x{} origin ({},{}) scale {} panel {}x{} at ({},{})",
+                "omarchy-menu-rust: focus output {:?} logical {}x{} origin ({},{}) scale {} panel {}x{} at ({},{})",
                 info.name,
                 logical_w,
                 logical_h,

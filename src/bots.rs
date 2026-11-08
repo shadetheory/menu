@@ -132,6 +132,8 @@ mod tests {
         let second = find(&bots, "example-b").unwrap();
         assert_eq!(second.name, "Example B");
         assert!(bots.iter().all(|bot| bot.argv.is_empty()));
-        assert!(bots.iter().all(|bot| !bot.id.contains('-') || bot.id.starts_with("example-")));
+        assert!(bots
+            .iter()
+            .all(|bot| !bot.id.contains('-') || bot.id.starts_with("example-")));
     }
 }

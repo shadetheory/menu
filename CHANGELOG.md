@@ -2,6 +2,16 @@
 
 Record completed changes here with their reasons and evidence. Future work and priority belong in [the roadmap](docs/roadmap.md). Dates are work dates, not release claims. Entries below reconstruct the current session from the working tree and recorded checks; earlier history remains in git.
 
+## 2026-11-07 — R03: implementation checkpoint for orb continuation
+
+**Why:** Jordan explicitly requested pushing the implementation and all relevant project context so orbs can continue. This is a feature-branch checkpoint, not a release signoff.
+
+**Changed:** Committed the previously local recall implementation, dependency metadata, and lower panel placement described in the earlier R01/R02 entries. No runtime behavior changed during this publication review.
+
+**Verification:** Re-ran `cargo test --offline --locked` (64 binary tests + 2 integration tests), `cargo clippy --offline --locked --all-targets -- -D warnings`, and `cargo fmt --check`; all passed. Reviewed the actual diff. Fresh-checkout build and publication evidence will be recorded in the validation document.
+
+**Limits:** Native shortcut acceptance remains open. Review found a wrapped-line versus source-line preview scrolling mismatch; the first orb task must reproduce and fix it. Late-preview selection and startup-config recovery also need targeted regressions. Publication does not make these gaps complete.
+
 ## 2026-11-07 — R00: shared repo brain and maintenance workflow
 
 **Why:** Jordan requested that important project facts persist directly in the repo, every change explain why it occurred, and future work be documented in dependency and priority order.
@@ -20,7 +30,7 @@ Record completed changes here with their reasons and evidence. Future work and p
 
 **Verification:** Recorded 64 binary tests and 2 integration tests passing, Clippy passing, real-corpus CLI queries, and native preview inspection. See [validation](docs/work-recall-validation.md) for exact coverage and gaps.
 
-**Limits:** Implementation is present in the working tree and locally installed, but not yet committed as an implementation checkpoint. Source previews are read-only. Topic picks are constants. No external-open, listener, task dispatch, or shared Qdrant service is wired. Semantic relevance still needs acceptance against a wider corpus.
+**Limits:** At this original checkpoint implementation was present in the working tree and locally installed but uncommitted; the later R03 entry records its code checkpoint. Source previews are read-only. Topic picks are constants. No external-open, listener, task dispatch, or shared Qdrant service is wired. Semantic relevance still needs acceptance against a wider corpus.
 
 ## 2026-11-07 — R01: lower placement and local installation
 

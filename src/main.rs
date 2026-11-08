@@ -11,6 +11,8 @@ mod model;
 mod place;
 mod providers;
 mod ranking;
+mod recall;
+mod recall_ui;
 mod safe_apps;
 mod theme;
 
@@ -30,6 +32,8 @@ fn main() -> ExitCode {
 
 fn run() -> Result<(), String> {
     let mut screenshot = None;
+    let mut work_search = None;
+    let mut work_inspect = None;
     // Spawning stays off unless the user passes --exec. --no-exec is still accepted.
     let mut saw_no_exec = false;
     let mut saw_live = false;
@@ -61,6 +65,12 @@ fn run() -> Result<(), String> {
                 let path = args.next().ok_or("--screenshot needs a path")?;
                 screenshot = Some(PathBuf::from(path));
             }
+            "--work-search" => {
+                work_search = Some(args.next().ok_or("--work-search needs a query")?)
+            }
+            "--work-inspect" => {
+                work_inspect = Some(args.next().ok_or("--work-inspect needs a source ID")?)
+            }
             "--list" => list = true,
             "--dry-run" => {
                 dry_run = Some(args.next().ok_or("--dry-run needs the query text")?);
@@ -82,6 +92,12 @@ fn run() -> Result<(), String> {
             }
             other => return Err(format!("unknown argument {other}. Try --help")),
         }
+    }
+    if let Some(query) = work_search {
+        return work_cli(Some(&query), None);
+    }
+    if let Some(id) = work_inspect {
+        return work_cli(None, Some(&id));
     }
     if list || dry_run.is_some() {
         let terminal = match terminal_raw.as_deref() {
@@ -118,6 +134,53 @@ fn run() -> Result<(), String> {
     )
 }
 
+fn work_cli(query: Option<&str>, inspect_id: Option<&str>) -> Result<(), String> {
+    let config_path = recall::config_path();
+    let cfg = recall::load_config(&config_path)?;
+    if !cfg.enabled {
+        return Err(format!(
+            "work recall is disabled in {}",
+            config_path.display()
+        ));
+    }
+    let (records, events, warnings) = recall::reconcile_with_status(&cfg, &recall::cache_path())?;
+    for warning in warnings {
+        eprintln!("source: {warning}");
+    }
+    if let Some(id) = inspect_id {
+        let r = records
+            .iter()
+            .find(|r| r.id == id)
+            .ok_or_else(|| format!("unknown source ID {id}"))?;
+        println!("{} — {} [{}]", r.title, r.project, r.id);
+        println!("source: {}", r.source_path.display());
+        println!(
+            "kind: {} | modified: {} | fingerprint: {}",
+            r.kind, r.modified_unix, r.fingerprint
+        );
+        println!("{}", r.text);
+    } else {
+        let result = recall::retrieve(&records, &cfg, query.unwrap_or_default(), 10);
+        println!("retrieval: {}", result.status);
+        let hits = result.hits;
+        if hits.is_empty() {
+            println!("no matches");
+        }
+        for h in hits {
+            println!(
+                "{}\t{}\t{}\t{}",
+                h.record.id,
+                h.record.title,
+                h.record.project,
+                h.record.text.lines().next().unwrap_or("")
+            );
+        }
+    }
+    if !events.is_empty() {
+        eprintln!("reconciled {} source change(s)", events.len());
+    }
+    Ok(())
+}
 /// `--no-exec` refuses every launch, in any order. `--safe-apps`, `--live`, and
 /// `--exec` are each valid only alone. Mixing those three is an error.
 pub fn resolve_launch_mode(
@@ -152,9 +215,10 @@ fn print_help() {
         "omarchy-menu-rust\n\
          Alongside-stock scaffold. Does not change Hyprland, PATH, or the stock menu.\n\
          \n\
-         Usage: omarchy-menu-rust [--no-exec] [--safe-apps] [--live] [--exec] [--run-guards] [--trace-state] [--list] [--dry-run QUERY]\n\
+         Usage: omarchy-menu-rust [--work-search QUERY | --work-inspect ID] [--no-exec] [--safe-apps] [--live] [--exec] [--run-guards] [--trace-state] [--list] [--dry-run QUERY]\n\
                 [--apps-dir DIR] [--terminal-argv ARGV] [--screenshot FILE] [--exit-after-first-frame]\n\
          \n\
+         --work-search and --work-inspect read only explicitly configured source files; see docs/work-recall.md.\n\
          --list and --dry-run only read desktop files and print a report. They do not start apps, guards, or clipboard tools, and they do not write files.\n\
          --terminal-argv is a JSON array of strings, or a quoted argv. Example: ghostty -e with a quoted path. It is not a shell command.\n\
          The default does not start commands. --no-exec refuses every launch no matter which other mode flag is also present.\n\
